@@ -1,0 +1,18 @@
+# Oracle Database Configuration
+ORACLE_USER=your_oracle_username
+ORACLE_PASSWORD=your_oracle_password
+ORACLE_HOST=your_oracle_host
+ORACLE_PORT=1521
+ORACLE_SERVICE_NAME=your_service_name
+
+# Snowflake Configuration
+SNOWFLAKE_USER=your_snowflake_username
+SNOWFLAKE_PASSWORD=your_snowflake_password
+SNOWFLAKE_ACCOUNT=your_snowflake_account
+SNOWFLAKE_WAREHOUSE=your_warehouse
+SNOWFLAKE_DATABASE=your_database
+SNOWFLAKE_SCHEMA=your_schema
+
+# Migration Configuration
+BATCH_SIZE=10000
+MAX_WORKERS=4
