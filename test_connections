@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+"""
+Database Connection Tester
+
+This script checks if we can connect to both Oracle and Snowflake databases.
+Run this first to make sure everything is configured correctly.
+"""
+
+import os
+import oracledb
+import snowflake.connector
+from dotenv import load_dotenv
+
+# Load our configuration file
+load_dotenv()
+
+def test_oracle_connection():
+    """
+    Test connection to Oracle database
+    
+    This function tries to connect to Oracle and run a simple query.
+    If it works, you'll see a success message.
+    If it fails, you'll see an error message explaining what went wrong.
+    """
+    try:
+        print("🔍 Testing Oracle connection...")
+        print("   Loading connection information...")
+        
+        # Get connection information from our .env file
+        user = os.getenv('ORACLE_USER')
+        password = os.getenv('ORACLE_PASSWORD')
+        host = os.getenv('ORACLE_HOST')
+        port = os.getenv('ORACLE_PORT', '1521')
+        service_name = os.getenv('ORACLE_SERVICE_NAME')
+        
+        # Check if we have all the information we need
+        if not user:
+            print("   ❌ Oracle username not found in .env file")
+            return False
+        if not password:
+            print("   ❌ Oracle password not found in .env file")
+            return False
+        if not host:
+            print("   ❌ Oracle host not found in .env file")
+            return False
+        if not service_name:
+            print("   ❌ Oracle service name not found in .env file")
+            return False
+        
+        print(f"   Connecting to Oracle at {host}:{port}/{service_name}...")
+        
+        # Create the connection string
+        dsn = f"{host}:{port}/{service_name}"
+        
+        # Try to connect
+        connection = oracledb.connect(user=user, password=password, dsn=dsn)
+        
+        # Run a simple test query
+        cursor = connection.cursor()
+        cursor.execute("SELECT 'Oracle Connection Successful' FROM DUAL")
+        result = cursor.fetchone()
+        
+        print(f"   ✅ {result[0]}")
+        print(f"   Connected as user: {user}")
+        
+        # Clean up
+        cursor.close()
+        connection.close()
+        return True
+        
+    except oracledb.DatabaseError as e:
+        print(f"   ❌ Oracle database error: {e}")
+        print("   This usually means:")
+        print("   - Wrong username or password")
+        print("   - Oracle server is not running")
+        print("   - Network connection problem")
+        print("   - Incorrect host or service name")
+        return False
+    except Exception as e:
+        print(f"   ❌ Unexpected error: {e}")
+        return False
+
+def test_snowflake_connection():
+    """
+    Test connection to Snowflake
+    
+    This function tries to connect to Snowflake and run a simple query.
+    """
+    try:
+        print("🔍 Testing Snowflake connection...")
+        print("   Loading connection information...")
+        
+        # Get connection information from our .env file
+        user = os.getenv('SNOWFLAKE_USER')
+        password = os.getenv('SNOWFLAKE_PASSWORD')
+        account = os.getenv('SNOWFLAKE_ACCOUNT')
+        warehouse = os.getenv('SNOWFLAKE_WAREHOUSE')
+        database = os.getenv('SNOWFLAKE_DATABASE')
+        schema = os.getenv('SNOWFLAKE_SCHEMA')
+        
+        # Check if we have all the information we need
+        required_fields = {
+            'user': user,
+            'password': password,
+            'account': account,
+            'warehouse': warehouse,
+            'database': database,
+            'schema': schema
+        }
+        
+        for field_name, field_value in required_fields.items():
+            if not field_value:
+                print(f"   ❌ Snowflake {field_name} not found in .env file")
+                return False
+        
+        print(f"   Connecting to Snowflake account: {account}")
+        print(f"   Using warehouse: {warehouse}")
+        print(f"   Database: {database}, Schema: {schema}")
+        
+        # Try to connect
+        conn = snowflake.connector.connect(
+            user=user,
+            password=password,
+            account=account,
+            warehouse=warehouse,
+            database=database,
+            schema=schema
+        )
+        
+        # Run a simple test query
+        cursor = conn.cursor()
+        cursor.execute("SELECT 'Snowflake Connection Successful' AS MESSAGE")
+        result = cursor.fetchone()
+        
+        print(f"   ✅ {result[0]}")
+        print(f"   Connected as user: {user}")
+        
+        # Get some basic info about the connection
+        cursor.execute("SELECT CURRENT_WAREHOUSE(), CURRENT_DATABASE(), CURRENT_SCHEMA()")
+        info = cursor.fetchone()
+        print(f"   Current warehouse: {info[0]}")
+        print(f"   Current database: {info[1]}")
+        print(f"   Current schema: {info[2]}")
+        
+        # Clean up
+        cursor.close()
+        conn.close()
+        return True
+        
+    except snowflake.connector.errors.DatabaseError as e:
+        print(f"   ❌ Snowflake database error: {e}")
+        print("   This usually means:")
+        print("   - Wrong username or password")
+        print("   - Incorrect account identifier")
+        print("   - Warehouse is suspended or doesn't exist")
+        print("   - Database or schema doesn't exist")
+        return False
+    except Exception as e:
+        print(f"   ❌ Unexpected error: {e}")
+        return False
+
+def main():
+    """
+    Main function that runs both connection tests
+    """
+    print("🚀 Database Connection Tester")
+    print("=" * 50)
+    print()
+    print("This tool will test connections to both Oracle and Snowflake.")
+    print("Make sure your .env file is configured correctly first.")
+    print()
+    
+    # Test Oracle connection
+    oracle_success = test_oracle_connection()
+    print()
+    
+    # Test Snowflake connection
+    snowflake_success = test_snowflake_connection()
+    print()
+    
+    # Summary
+    print("📊 Connection Test Results:")
+    print("=" * 30)
+    if oracle_success:
+        print("✅ Oracle: Connected successfully")
+    else:
+        print("❌ Oracle: Connection failed")
+    
+    if snowflake_success:
+        print("✅ Snowflake: Connected successfully")
+    else:
+        print("❌ Snowflake: Connection failed")
+    
+    print()
+    if oracle_success and snowflake_success:
+        print("🎉 Great! Both connections work. You're ready to migrate data!")
+    else:
+        print("⚠️  Please fix the connection issues before proceeding with migration.")
+        print("   Check your .env file and verify all connection details.")
+
+if __name__ == "__main__":
+    main()
